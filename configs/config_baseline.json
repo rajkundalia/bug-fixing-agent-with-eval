@@ -1,0 +1,12 @@
+{
+  "id": "config_baseline",
+  "prompt_version": "v1",
+  "model": "qwen3:8b",
+  "think": false,
+  "tools": [
+    "read_file",
+    "edit_file",
+    "run_tests"
+  ],
+  "system_prompt": "You are a debugging agent. You have tools to read files, edit files, and run tests. Fix the described bug, then verify the fix with run_tests. Stop as soon as tests pass. Do not modify test files — only fix the source code."
+}
