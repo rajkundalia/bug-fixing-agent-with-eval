@@ -1,0 +1,69 @@
+"""
+agents/tools.py
+---------------
+The three tools available to the bug-fixing agent.
+These are passed directly to the Ollama `chat()` call via `tools=[...]`,
+so their docstrings and type annotations ARE the tool schema the model sees.
+
+Design note: keep these thin wrappers — all side-effect logic lives here
+so the agent loop (issue_resolver.py) stays clean and testable.
+"""
+
+import subprocess
+from pathlib import Path
+
+
+def read_file(path: str) -> str:
+    """Read and return the full contents of a file.
+
+    Args:
+        path: Relative or absolute path to the file to read.
+
+    Returns:
+        The file contents as a string.
+    """
+    return Path(path).read_text(encoding="utf-8")
+
+
+def edit_file(path: str, content: str) -> dict:
+    """Overwrite a file with new content.
+
+    Args:
+        path: Relative or absolute path to the file to write.
+        content: The complete new content to write to the file.
+
+    Returns:
+        A dict with keys 'status' and 'path'.
+    """
+    Path(path).write_text(content, encoding="utf-8")
+    return {"status": "written", "path": path}
+
+
+def run_tests() -> dict:
+    """Run the full pytest test suite and return pass/fail status plus output.
+
+    Returns:
+        A dict with keys:
+            'passed' (bool): True if all tests passed (exit code 0).
+            'output' (str): Combined stdout + stderr from pytest.
+    """
+    result = subprocess.run(
+        ["py", "-m", "pytest", "-v", "--tb=short"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    return {
+        "passed": result.returncode == 0,
+        "output": result.stdout + result.stderr,
+    }
+
+
+# ---------------------------------------------------------------------------
+# Tool registry — used by issue_resolver.py to dispatch tool calls by name
+# ---------------------------------------------------------------------------
+TOOL_REGISTRY: dict = {
+    "read_file": read_file,
+    "edit_file": edit_file,
+    "run_tests": run_tests,
+}

@@ -1,0 +1,8 @@
+{
+  "id": "task_004",
+  "description": "The function `flatten` in `src/list_utils.py` raises a RecursionError on deeply nested lists. It should handle them without crashing.",
+  "target_file": "src/list_utils.py",
+  "test_file": "tests/test_list_utils.py",
+  "planted_root_cause": "The recursive implementation has no depth limit and crashes on deeply nested input. Fix: convert to an iterative stack-based approach, or add sys.setrecursionlimit with a safe guard.",
+  "max_turns": 5
+}

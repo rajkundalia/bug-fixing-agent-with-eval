@@ -1,0 +1,8 @@
+{
+  "id": "task_007",
+  "description": "The function `celsius_to_fahrenheit` in `src/converter.py` returns the wrong value. For 0°C it should return 32.0, but it returns 0.0.",
+  "target_file": "src/converter.py",
+  "test_file": "tests/test_converter.py",
+  "planted_root_cause": "The formula uses `(c * 9 / 5)` but omits the `+ 32` offset. Fix: change to `(c * 9 / 5) + 32`.",
+  "max_turns": 3
+}

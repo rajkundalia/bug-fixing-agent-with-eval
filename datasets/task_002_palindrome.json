@@ -1,0 +1,8 @@
+{
+  "id": "task_002",
+  "description": "The function `is_palindrome` in `src/strings.py` incorrectly returns False for single-character strings. It should return True.",
+  "target_file": "src/strings.py",
+  "test_file": "tests/test_strings.py",
+  "planted_root_cause": "The function checks `len(s) < 2` and returns False instead of True for single-char strings. Fix: the early-return condition should return True (a single character is always a palindrome).",
+  "max_turns": 3
+}

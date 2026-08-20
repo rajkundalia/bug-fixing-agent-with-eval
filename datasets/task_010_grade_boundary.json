@@ -1,0 +1,8 @@
+{
+  "id": "task_010",
+  "description": "The function `get_grade` in `src/grader.py` returns 'F' for a score of 100. It should return 'A'.",
+  "target_file": "src/grader.py",
+  "test_file": "tests/test_grader.py",
+  "planted_root_cause": "The boundary condition uses `score > 90` (strict) instead of `score >= 90`, so a score of exactly 90 or 100 falls through to 'F'. Fix: change `>` to `>=` in the 'A' grade condition.",
+  "max_turns": 3
+}
