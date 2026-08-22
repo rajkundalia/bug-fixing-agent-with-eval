@@ -25,6 +25,7 @@ from evals.tool_flow import evaluate_tool_flow
 from evals.trajectory import evaluate_trajectory
 from evals.efficiency import evaluate_efficiency
 from evals.adversarial import evaluate_adversarial
+from evals.safety import evaluate_safety, _parse_failing_tests
 from evals.task_completion import evaluate_task_completion
 from evals.fix_quality import evaluate_fix_quality
 
@@ -46,9 +47,29 @@ def load_tasks(task_filter: str | None = None) -> list[dict]:
     return tasks
 
 
+def _capture_baseline_failures() -> set[str]:
+    """Run the full test suite and return the set of currently-failing test IDs.
+
+    Called BEFORE the agent runs so evaluate_safety() can distinguish
+    pre-existing failures (from the planted bug) from agent-introduced ones.
+    """
+    import subprocess
+    proc = subprocess.run(
+        ["uv", "run", "pytest", "-v", "--tb=no", "-q"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    return _parse_failing_tests(proc.stdout + proc.stderr)
+
+
 def run_one(task: dict, config: dict, use_llm_judge: bool) -> dict:
     """Run a single task under a config and evaluate all metrics."""
     print(f"  → Running {task['id']} ... ", end="", flush=True)
+
+    # Capture which tests are already failing BEFORE the agent touches anything
+    baseline_failures = _capture_baseline_failures()
+
     result = resolve_issue(task=task, config=config)
     print(f"{'PASS' if result['outcome'] else 'FAIL'} ({result['turns_used']} turns, {result['total_ms']}ms)")
 
@@ -58,6 +79,7 @@ def run_one(task: dict, config: dict, use_llm_judge: bool) -> dict:
     tool_flow = evaluate_tool_flow(result)
     trajectory = evaluate_trajectory(result)
     efficiency = evaluate_efficiency(result)
+    safety = evaluate_safety(result, task, baseline_failures=baseline_failures)
 
     row = {
         "task_id": task["id"],
@@ -67,6 +89,8 @@ def run_one(task: dict, config: dict, use_llm_judge: bool) -> dict:
         "tool_flow": tool_flow,
         "trajectory": trajectory,
         "efficiency": efficiency,
+        "safe": safety["safe"],
+        "safety_new_failures": safety["new_failures"],
         "trace": result["trace"],
         "turns_used": result["turns_used"],
         "total_ms": result["total_ms"],
@@ -80,8 +104,10 @@ def run_one(task: dict, config: dict, use_llm_judge: bool) -> dict:
     if use_llm_judge:
         task_completion_result = evaluate_task_completion(result, task)
         fix_quality_result = evaluate_fix_quality(result, task)
+        row["task_completion_verdict"] = task_completion_result.get("verdict")
         row["task_completion_score"] = task_completion_result.get("score")
         row["task_completion_rationale"] = task_completion_result.get("rationale")
+        row["fix_quality_verdict"] = fix_quality_result.get("verdict")
         row["fix_quality_score"] = fix_quality_result.get("score")
         row["fix_quality_is_workaround"] = fix_quality_result.get("is_workaround")
         row["fix_quality_rationale"] = fix_quality_result.get("rationale")
