@@ -27,11 +27,15 @@ def read_file(path: str) -> str:
 
 
 def edit_file(path: str, content: str) -> dict:
-    """Overwrite a file with new content.
+    """Overwrite a file with complete new content.
+
+    IMPORTANT: This tool overwrites the entire file on disk.
+    You MUST provide the ENTIRE file content, including all existing functions and imports.
+    Do NOT output only the modified function or snippet, or other functions in the file will be deleted!
 
     Args:
         path: Relative or absolute path to the file to write.
-        content: The complete new content to write to the file.
+        content: The complete new content to write to the file (including all existing functions).
 
     Returns:
         A dict with keys 'status' and 'path'.

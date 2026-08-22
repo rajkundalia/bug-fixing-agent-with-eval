@@ -147,22 +147,21 @@ def main():
         print(f"\nConfig: {config_id}  |  Tasks: {len(tasks)}  |  Judge: {args.judge}")
         print("=" * 60)
 
+        timestamp = time.strftime("%Y%m%d_%H%M%S")
+        out_path = Path("reports") / f"results_{config_id}_{timestamp}.json"
+        trace_path = Path("reports") / f"traces_{config_id}_{timestamp}.json"
+
         all_results = []
         for task in tasks:
             row = run_one(task, config, use_llm_judge=args.judge)
             all_results.append(row)
 
-        timestamp = time.strftime("%Y%m%d_%H%M%S")
-        out_path = Path("reports") / f"results_{config_id}_{timestamp}.json"
+            # Save incrementally after each task
+            summary_rows = [{key: value for key, value in result_row.items() if key != "trace"} for result_row in all_results]
+            out_path.write_text(json.dumps(summary_rows, indent=2), encoding="utf-8")
 
-        # Save full results (excluding trace to keep it readable; trace saved separately)
-        summary_rows = [{key: value for key, value in result_row.items() if key != "trace"} for result_row in all_results]
-        out_path.write_text(json.dumps(summary_rows, indent=2), encoding="utf-8")
-
-        # Save traces separately
-        trace_path = Path("reports") / f"traces_{config_id}_{timestamp}.json"
-        trace_rows = [{"task_id": result_row["task_id"], "trace": result_row["trace"]} for result_row in all_results]
-        trace_path.write_text(json.dumps(trace_rows, indent=2), encoding="utf-8")
+            trace_rows = [{"task_id": result_row["task_id"], "trace": result_row["trace"]} for result_row in all_results]
+            trace_path.write_text(json.dumps(trace_rows, indent=2), encoding="utf-8")
 
         passed = sum(1 for result_row in all_results if result_row["outcome"])
         print(f"\nResults: {passed}/{len(all_results)} passed")
