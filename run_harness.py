@@ -80,7 +80,7 @@ def run_one(task: dict, config: dict, use_llm_judge: bool) -> dict:
     print(f"{'PASS' if result['outcome'] else 'FAIL'} ({result['turns_used']} turns, {result['total_ms']}ms)")
 
     # Rule-based evals (always run)
-    outcome = evaluate_outcome(result)
+    outcome = evaluate_outcome(result, task)
     tool_correctness = evaluate_tool_correctness(result, task)
     tool_flow = evaluate_tool_flow(result)
     trajectory = evaluate_trajectory(result)
