@@ -36,7 +36,22 @@ def edit_file(path: str, content: str) -> dict:
     Returns:
         A dict with keys 'status' and 'path'.
     """
-    Path(path).write_text(content, encoding="utf-8")
+    clean_content = content.strip()
+    # Strip markdown code fences if present
+    if clean_content.startswith("```python"):
+        clean_content = clean_content[9:]
+    elif clean_content.startswith("```"):
+        clean_content = clean_content[3:]
+    if clean_content.endswith("```"):
+        clean_content = clean_content[:-3]
+
+    # Strip full-file triple quote wrappers if present
+    if clean_content.startswith('"""') and clean_content.endswith('"""') and len(clean_content) > 6:
+        clean_content = clean_content[3:-3]
+
+    clean_content = clean_content.strip()
+
+    Path(path).write_text(clean_content, encoding="utf-8")
     return {"status": "written", "path": path}
 
 
