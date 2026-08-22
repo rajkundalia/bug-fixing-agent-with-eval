@@ -3,6 +3,7 @@
   "description": "The function `merge_dicts` in `src/dict_utils.py` mutates the first argument instead of returning a new merged dict.",
   "target_file": "src/dict_utils.py",
   "test_file": "tests/test_dict_utils.py",
+  "test_filter": "merge_dicts",
   "planted_root_cause": "The function does `a.update(b); return a`, which mutates `a` in place. Fix: return `{**a, **b}` or `a.copy()` then update.",
   "max_turns": 3
 }

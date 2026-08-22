@@ -3,6 +3,7 @@
   "description": "The function `count_words` in `src/strings.py` returns 1 for an empty string instead of 0.",
   "target_file": "src/strings.py",
   "test_file": "tests/test_strings.py",
+  "test_filter": "count_words",
   "planted_root_cause": "The function calls `len(s.split())` but `''.split()` returns `[]` — wait, that's correct. The bug is that the function checks `if not s: return 1` at the top. Fix: change the early return to `return 0`.",
   "max_turns": 3
 }

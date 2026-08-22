@@ -3,6 +3,7 @@
   "description": "The function `remove_duplicates` in `src/list_utils.py` does not preserve the original order of elements.",
   "target_file": "src/list_utils.py",
   "test_file": "tests/test_list_utils.py",
+  "test_filter": "remove_duplicates",
   "planted_root_cause": "The function uses `list(set(items))` which doesn't preserve insertion order. Fix: use `dict.fromkeys(items)` or a seen-set loop that preserves order.",
   "max_turns": 3
 }

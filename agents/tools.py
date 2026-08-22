@@ -59,16 +59,26 @@ def edit_file(path: str, content: str) -> dict:
     return {"status": "written", "path": path}
 
 
-def run_tests(*args, **kwargs) -> dict:
-    """Run the full pytest test suite and return pass/fail status plus output.
+def run_tests(path: str | None = None, filter: str | None = None, *args, **kwargs) -> dict:
+    """Run pytest on the test suite or a specific test file/filter.
+
+    Args:
+        path (str | None): Optional path to a specific test file (e.g. 'tests/test_calculator.py').
+        filter (str | None): Optional -k pattern to run specific test functions (e.g. 'calculate_total').
 
     Returns:
         A dict with keys:
-            'passed' (bool): True if all tests passed (exit code 0).
+            'passed' (bool): True if tests passed (exit code 0).
             'output' (str): Combined stdout + stderr from pytest.
     """
+    cmd = [sys.executable, "-m", "pytest", "-v", "--tb=short"]
+    if path:
+        cmd.append(path)
+    if filter:
+        cmd.extend(["-k", filter])
+
     result = subprocess.run(
-        [sys.executable, "-m", "pytest", "-v", "--tb=short"],
+        cmd,
         capture_output=True,
         text=True,
         timeout=60,

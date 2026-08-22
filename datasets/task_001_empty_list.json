@@ -3,6 +3,7 @@
   "description": "The function `calculate_total` in `src/calculator.py` raises an IndexError when called with an empty list. It should return 0 instead.",
   "target_file": "src/calculator.py",
   "test_file": "tests/test_calculator.py",
+  "test_filter": "calculate_total",
   "planted_root_cause": "The function uses `items[0]` as a starting value instead of 0, causing an IndexError on empty input. Fix: use 0 as the accumulator start value.",
   "max_turns": 4
 }

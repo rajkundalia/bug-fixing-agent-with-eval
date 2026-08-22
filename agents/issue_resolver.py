@@ -43,10 +43,13 @@ ANTHROPIC_TOOL_DEFINITIONS = {
     },
     "run_tests": {
         "name": "run_tests",
-        "description": "Run the full pytest test suite and return pass/fail status plus output.",
+        "description": "Run the pytest test suite for a specific test file or filter pattern.",
         "input_schema": {
             "type": "object",
-            "properties": {}
+            "properties": {
+                "path": {"type": "string", "description": "Optional relative path to test file (e.g. 'tests/test_calculator.py')"},
+                "filter": {"type": "string", "description": "Optional -k filter pattern (e.g. 'calculate_total')"}
+            }
         }
     }
 }
@@ -62,10 +65,18 @@ def resolve_issue(task: dict, config: dict) -> dict:
 
     tools = [ANTHROPIC_TOOL_DEFINITIONS[t] for t in enabled_tools if t in ANTHROPIC_TOOL_DEFINITIONS]
 
+    user_content = (
+        f"{task['description']}\n"
+        f"Target file: {task['target_file']}\n"
+        f"Test file: {task.get('test_file', '')}"
+    )
+    if task.get("test_filter"):
+        user_content += f"\nTest filter: {task['test_filter']}"
+
     messages = [
         {
             "role": "user",
-            "content": f"{task['description']}\nTarget file: {task['target_file']}",
+            "content": user_content,
         }
     ]
 

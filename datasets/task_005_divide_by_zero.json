@@ -3,6 +3,7 @@
   "description": "The function `divide` in `src/calculator.py` silently returns 0 when dividing by zero instead of raising a ValueError.",
   "target_file": "src/calculator.py",
   "test_file": "tests/test_calculator.py",
+  "test_filter": "divide",
   "planted_root_cause": "The function has a bare `except` that catches ZeroDivisionError and returns 0. Fix: remove the try/except and let the ZeroDivisionError propagate, or raise ValueError('Cannot divide by zero').",
   "max_turns": 3
 }
