@@ -82,3 +82,13 @@ The payoff — how results from two configs get diffed to produce the headline f
 ### Q: Why do we use two different local models (`qwen3:8b` as agent and `llama3.1:8b` as judge)?
 * **Eliminates Self-Preference Bias:** LLMs tend to be lenient when grading their own generated code or reasoning. Using a different model family for judging (`llama3.1:8b`) ensures an unbiased, independent evaluation.
 * **Sequential & Zero Cost:** Both models run locally via Ollama in sequence (agent trace generated first, judge scores trace second), requiring zero cloud API costs and fitting easily in 16GB RAM.
+
+### Q: Why does `judges/llm_judge.py` ask for categorical verdicts instead of floating-point scores?
+* **Eliminates Calibration Noise:** LLMs are notoriously bad at guessing continuous float values (`0.65` vs `0.75`). Asking the judge to pick from discrete, mutually exclusive categories (`COMPLETE`, `PARTIAL`, `FAILED` for task completion; `GENUINE`, `PARTIAL`, `WORKAROUND`, `FAILED` for fix quality) produces highly consistent judgments.
+* **Deterministic Score Mapping:** The judge never generates numbers directly. Python deterministically converts verdicts to numerical scores (`COMPLETE`/`GENUINE` = 1.0, `PARTIAL` = 0.5, `WORKAROUND`/`FAILED` = 0.0).
+* **Reasoning-First Schema:** Prompt JSON templates output `"rationale"` before `"verdict"`. This forces the model to generate step-by-step reasoning out loud before committing to a final verdict classification.
+* **Native JSON Mode:** `_call_judge()` passes `format="json"` to Ollama's `chat()` API, ensuring strict JSON syntax formatting at the sampling level.
+
+### Q: What are `turns_to_pass` and `_args_key` in `evals/trajectory.py`?
+* **`turns_to_pass`:** Replaces vague developer slang ("turns-to-green") to explicitly measure the 0-indexed turn where `run_tests` first returned `passed=True`. Quantifies trial efficiency between agent prompt configurations.
+* **`_args_key` (Stable Keys):** Converts dictionary arguments into alphabetically sorted key-value strings (`str(sorted(args.items()))`). Guarantees that two dictionary objects with identical keys and values always produce the exact same string key, enabling reliable detection of stuck tool loops regardless of key order.

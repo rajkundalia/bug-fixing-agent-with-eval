@@ -1,0 +1,16 @@
+[project]
+name = "bug-fixing-agent-with-eval"
+version = "0.1.0"
+description = "A bug-fixing agent with a full eval framework — the agent is the vehicle, the evals are the teaching artifact."
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "ollama>=0.6.2",
+    "pytest>=9.1.1",
+]
+
+[project.scripts]
+harness = "run_harness:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
