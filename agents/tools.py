@@ -1,8 +1,8 @@
 """
 agents/tools.py
----------------
-The three tools available to the bug-fixing agent.
-These are passed directly to the Ollama `chat()` call via `tools=[...]`,
+----------------
+The tools available to the bug-fixing agent.
+These are passed directly to the Anthropic API call via tools=[...],
 so their docstrings and type annotations ARE the tool schema the model sees.
 
 Design note: keep these thin wrappers — all side-effect logic lives here

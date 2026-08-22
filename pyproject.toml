@@ -5,6 +5,7 @@ description = "A bug-fixing agent with a full eval framework — the agent is th
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "anthropic>=1.0.0",
     "ollama>=0.6.2",
     "pytest>=9.1.1",
 ]

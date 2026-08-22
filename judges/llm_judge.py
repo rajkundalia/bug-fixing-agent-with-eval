@@ -1,7 +1,7 @@
 """
 judges/llm_judge.py
---------------------
-LLM-as-a-judge using llama3.2:3b via Ollama.
+-------------------
+LLM-as-a-judge using Anthropic Claude API.
 
 Used by task_completion.py and fix_quality.py.
 Using a different model family from the agent (qwen3) intentionally
@@ -23,10 +23,10 @@ All judge calls return structured JSON parsed into a Python dict.
 
 import json
 import re
-from ollama import chat
+import anthropic
 
 
-JUDGE_MODEL = "llama3.2:3b"
+JUDGE_MODEL = "claude-haiku-4-5"
 
 # Deterministic verdict → score mappings
 # These are fixed constants, not produced by the LLM.
@@ -46,21 +46,18 @@ FIX_QUALITY_SCORES = {
 
 def _call_judge(prompt: str) -> str:
     """Send a prompt to the judge model and return its raw text response."""
-    response = chat(
+    client = anthropic.Anthropic()
+    response = client.messages.create(
         model=JUDGE_MODEL,
-        messages=[
-            {
-                "role": "system",
-                "content": (
-                    "You are an objective evaluator of AI agent behavior. "
-                    "Always respond with valid JSON only — no preamble, no explanation outside the JSON."
-                ),
-            },
-            {"role": "user", "content": prompt},
-        ],
-        format="json",
+        max_tokens=1024,
+        system=(
+            "You are an objective evaluator of AI agent behavior. "
+            "Always respond with valid JSON only — no preamble, no explanation outside the JSON."
+        ),
+        messages=[{"role": "user", "content": prompt}],
     )
-    return response.message.content or ""
+    text_blocks = [block.text for block in response.content if block.type == "text"]
+    return "\n".join(text_blocks)
 
 
 def _extract_json(raw: str) -> dict:
