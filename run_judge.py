@@ -16,6 +16,9 @@ import sys
 import json
 import argparse
 from pathlib import Path
+from dotenv import load_dotenv
+
+load_dotenv()
 
 from evals.task_completion import evaluate_task_completion
 from evals.fix_quality import evaluate_fix_quality

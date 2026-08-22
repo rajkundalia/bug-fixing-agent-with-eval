@@ -18,6 +18,9 @@ import subprocess
 import sys
 import time
 from pathlib import Path
+from dotenv import load_dotenv
+
+load_dotenv()
 
 from agents.issue_resolver import resolve_issue
 from evals.outcome import evaluate_outcome

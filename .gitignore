@@ -8,6 +8,7 @@ wheels/
 
 # Virtual environments
 .venv
+.env
 
 # Generated eval output — results and traces from harness runs
 reports/results_*.json
