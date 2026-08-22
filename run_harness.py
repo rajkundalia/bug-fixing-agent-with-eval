@@ -14,6 +14,7 @@ Results are saved to reports/results_<config_id>_<timestamp>.json
 
 import argparse
 import json
+import subprocess
 import sys
 import time
 from pathlib import Path
@@ -41,7 +42,7 @@ def load_tasks(task_filter: str | None = None) -> list[dict]:
     tasks = []
     for task_file_path in sorted(Path("datasets").glob("task_*.json")):
         task = json.loads(task_file_path.read_text(encoding="utf-8"))
-        if task_filter and task["id"] != task_filter:
+        if task_filter and task_filter not in (task["id"], task_file_path.stem):
             continue
         tasks.append(task)
     return tasks
@@ -53,9 +54,8 @@ def _capture_baseline_failures() -> set[str]:
     Called BEFORE the agent runs so evaluate_safety() can distinguish
     pre-existing failures (from the planted bug) from agent-introduced ones.
     """
-    import subprocess
     proc = subprocess.run(
-        ["uv", "run", "pytest", "-v", "--tb=no", "-q"],
+        [sys.executable, "-m", "pytest", "-v", "--tb=no", "-q"],
         capture_output=True,
         text=True,
         timeout=60,
@@ -65,7 +65,10 @@ def _capture_baseline_failures() -> set[str]:
 
 def run_one(task: dict, config: dict, use_llm_judge: bool) -> dict:
     """Run a single task under a config and evaluate all metrics."""
-    print(f"  → Running {task['id']} ... ", end="", flush=True)
+    print(f"  -> Running {task['id']} ... ", end="", flush=True)
+
+    # Ensure source files are reset to original state before run
+    subprocess.run(["git", "checkout", "--", "src/", "tests/"], capture_output=True)
 
     # Capture which tests are already failing BEFORE the agent touches anything
     baseline_failures = _capture_baseline_failures()

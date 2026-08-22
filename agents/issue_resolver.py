@@ -76,7 +76,6 @@ def resolve_issue(task: dict, config: dict) -> dict:
             model=model,
             messages=messages,
             tools=tool_fns if tool_fns else None,
-            think=config.get("think", False),
         )
 
         message = response.message
@@ -88,6 +87,7 @@ def resolve_issue(task: dict, config: dict) -> dict:
             for tool_call in message.tool_calls:
                 function_name = tool_call.function.name
                 function_args = tool_call.function.arguments or {}
+                print(f"\n    [Turn {turn+1}] Tool Call -> {function_name}({function_args})", flush=True)
 
                 # Dispatch to the real function
                 if function_name in TOOL_REGISTRY and function_name in enabled_tools:
@@ -123,6 +123,8 @@ def resolve_issue(task: dict, config: dict) -> dict:
 
         else:
             # Model responded with plain text — either done or stuck
+            snippet = (message.content or "").strip().replace('\n', ' ')
+            print(f"\n    [Turn {turn+1}] Text Response -> {snippet[:80]}...", flush=True)
             entry = {
                 "turn": turn,
                 "tool": None,

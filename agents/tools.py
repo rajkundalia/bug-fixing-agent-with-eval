@@ -9,6 +9,7 @@ Design note: keep these thin wrappers — all side-effect logic lives here
 so the agent loop (issue_resolver.py) stays clean and testable.
 """
 
+import sys
 import subprocess
 from pathlib import Path
 
@@ -48,7 +49,7 @@ def run_tests() -> dict:
             'output' (str): Combined stdout + stderr from pytest.
     """
     result = subprocess.run(
-        ["py", "-m", "pytest", "-v", "--tb=short"],
+        [sys.executable, "-m", "pytest", "-v", "--tb=short"],
         capture_output=True,
         text=True,
         timeout=60,

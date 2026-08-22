@@ -118,12 +118,12 @@ def compare(
 
     parts = []
     if regressions:
-        parts.append(f"⚠ {len(regressions)} regression(s): {regressions}")
+        parts.append(f"[!] {len(regressions)} regression(s): {regressions}")
     if improvements:
-        parts.append(f"✓ {len(improvements)} improvement(s): {improvements}")
+        parts.append(f"[OK] {len(improvements)} improvement(s): {improvements}")
     if delta is not None:
         direction = "+" if delta >= 0 else ""
-        parts.append(f"Avg task-completion: {avg_a} → {avg_b} ({direction}{delta})")
+        parts.append(f"Avg task-completion: {avg_a} -> {avg_b} ({direction}{delta})")
     if not parts:
         parts.append("No meaningful difference detected between configs.")
 
