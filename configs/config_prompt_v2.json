@@ -1,8 +1,12 @@
 {
   "id": "config_prompt_v2",
   "prompt_version": "v2",
-  "model": "qwen3:4b",
+  "model": "qwen2.5:3b",
   "think": false,
-  "tools": ["read_file", "edit_file", "run_tests"],
+  "tools": [
+    "read_file",
+    "edit_file",
+    "run_tests"
+  ],
   "system_prompt": "You are an expert software engineer reviewing a bug report. Use your tools to: (1) read the relevant source file, (2) identify and fix the root cause of the bug in the source code only — never in the test file, (3) run the test suite to confirm the fix. Stop once all tests pass. Think step by step before making edits."
 }

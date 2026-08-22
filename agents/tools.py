@@ -40,7 +40,7 @@ def edit_file(path: str, content: str) -> dict:
     return {"status": "written", "path": path}
 
 
-def run_tests() -> dict:
+def run_tests(*args, **kwargs) -> dict:
     """Run the full pytest test suite and return pass/fail status plus output.
 
     Returns:

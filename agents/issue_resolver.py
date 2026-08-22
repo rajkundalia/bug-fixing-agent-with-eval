@@ -93,7 +93,10 @@ def resolve_issue(task: dict, config: dict) -> dict:
 
                 # Dispatch to the real function
                 if function_name in TOOL_REGISTRY and function_name in enabled_tools:
-                    tool_result = TOOL_REGISTRY[function_name](**function_args)
+                    try:
+                        tool_result = TOOL_REGISTRY[function_name](**function_args)
+                    except Exception as err:
+                        tool_result = {"error": f"Failed to execute '{function_name}': {err}"}
                 else:
                     tool_result = {"error": f"Tool '{function_name}' not available in this config."}
 

@@ -1,8 +1,11 @@
 {
   "id": "config_no_run_tests",
   "prompt_version": "v1",
-  "model": "qwen3:4b",
+  "model": "qwen2.5:3b",
   "think": false,
-  "tools": ["read_file", "edit_file"],
+  "tools": [
+    "read_file",
+    "edit_file"
+  ],
   "system_prompt": "You are a debugging agent. You have tools to read files and edit files. Fix the described bug in the source code. Do not modify test files — only fix the source code."
 }
