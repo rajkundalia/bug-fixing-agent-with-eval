@@ -76,6 +76,8 @@ def resolve_issue(task: dict, config: dict) -> dict:
             model=model,
             messages=messages,
             tools=tool_fns if tool_fns else None,
+            think=config.get("think", False),
+            options={"num_predict": 2048},  # cap tokens; 2048 allows full file rewrites
         )
 
         message = response.message

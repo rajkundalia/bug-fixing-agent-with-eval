@@ -1,10 +1,10 @@
 """
 judges/llm_judge.py
 --------------------
-LLM-as-a-judge using llama3.1:8b via Ollama.
+LLM-as-a-judge using llama3.2:3b via Ollama.
 
 Used by task_completion.py and fix_quality.py.
-Using a different model family from the agent (qwen3:8b) intentionally
+Using a different model family from the agent (qwen3) intentionally
 reduces self-preference / self-leniency bias in judging.
 
 Scoring design:
@@ -26,7 +26,7 @@ import re
 from ollama import chat
 
 
-JUDGE_MODEL = "llama3.1:8b"
+JUDGE_MODEL = "llama3.2:3b"
 
 # Deterministic verdict → score mappings
 # These are fixed constants, not produced by the LLM.
