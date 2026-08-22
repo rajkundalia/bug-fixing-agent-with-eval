@@ -122,7 +122,7 @@ def main():
     parser = argparse.ArgumentParser(description="Bug-fixing agent eval harness")
     parser.add_argument(
         "--config", action="append", dest="configs",
-        default=["config_baseline"],
+        default=None,
         help="Config ID(s) to run (can be specified multiple times)",
     )
     parser.add_argument("--task", default=None, help="Run only this task ID")
@@ -132,9 +132,11 @@ def main():
     )
     args = parser.parse_args()
 
+    configs_to_run = args.configs if args.configs else ["config_baseline"]
+
     Path("reports").mkdir(exist_ok=True)
 
-    for config_id in args.configs:
+    for config_id in configs_to_run:
         config = load_config(config_id)
         tasks = load_tasks(args.task)
 
