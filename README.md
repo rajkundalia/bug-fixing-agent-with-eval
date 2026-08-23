@@ -2,7 +2,7 @@
 
 A production-grade, multi-layered evaluation framework for LLM-based autonomous coding agents. Evaluates agent behavior across **outcome correctness, tool flow, trajectory efficiency, safety, task completion, and fix quality**.
 
-## 🎯 What Are We Evaluating? (The Questions)
+## What Are We Evaluating? (The Questions)
 This project is built to answer fundamental questions about agent behavior that go beyond a simple pass/fail metric:
 - **Capability vs. Constraints:** Does over-prompting an agent with rigid "step-by-step" rules hurt its ability to solve problems efficiently?
 - **Tool Reliance:** Can an agent successfully fix code "blind" without a test-runner tool to verify its work?
@@ -11,7 +11,7 @@ This project is built to answer fundamental questions about agent behavior that 
 
 *See [EVALUATION_FINDINGS.md](EVALUATION_FINDINGS.md) for the empirical answers to these questions based on our benchmark runs.*
 
-## 📐 Evaluation Methodology (What We Check & How)
+## Evaluation Methodology (What We Check & How)
 
 To rigorously answer the questions above, the project maps 8 specific evaluation questions directly to individual evaluator files:
 
@@ -150,5 +150,5 @@ bug-fixing-agent-with-eval/
 ---
 
 ## Documentation & Articles
-- 📖 [EVALUATION_FINDINGS.md](EVALUATION_FINDINGS.md) — Comprehensive empirical findings from the 3-way benchmark run.
-- 📐 [implementation-prompts/understanding-the-implementation.md](implementation-prompts/understanding-the-implementation.md) — Archived architectural map and code reading guide.
+- [EVALUATION_FINDINGS.md](EVALUATION_FINDINGS.md) — Comprehensive empirical findings from the 3-way benchmark run.
+- [implementation-prompts/understanding-the-implementation.md](implementation-prompts/understanding-the-implementation.md) — Archived architectural map and code reading guide.
