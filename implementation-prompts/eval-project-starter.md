@@ -1,6 +1,8 @@
-# Agent Evals Sample Project — Starting Point
+# Agent Evals Sample Project — Starting Point [OBSOLETE - ARCHIVED]
 
-*Companion file to `agent-evals-outline.md` (the article outline). This file is the actual build starting point.*
+> **OBSOLETE**: Implementation is complete. Refer to `README.md` and the active python codebase (`agents/`, `evals/`, `judges/`) as the source of truth.
+
+---
 
 ## What we're building
 A small local agent that fixes deliberately broken single-file Python bugs, wrapped in a reusable eval framework. The agent is the vehicle; the eval framework is the real teaching artifact.
@@ -18,29 +20,21 @@ A small local agent that fixes deliberately broken single-file Python bugs, wrap
 | 7 | Can I run regression tests? | `regression.py` (re-run solved tasks after any prompt/model/tool change) |
 | 8 | Can I explain why a task failed? | `fix_quality.py` (LLM-judge: genuine fix vs. workaround) + `task_completion.py` rationale field |
 
-## Decisions locked (see agent-evals-outline.md "Open items" for full reasoning)
+## Decisions locked
 - **Language**: Python
-- **Agent model**: `qwen3:8b` (local, via Ollama, native tool-calling — consider `think=True` for better multi-tool accuracy)
-- **Judge model**: `llama3.1:8b` (different model family from agent — reduces self-preference bias)
-- **SDK**: raw `ollama` Python library, no agent framework (LangChain/Claude Agent SDK/etc. deliberately avoided — see outline for reasoning)
-- **Execution**: sequential — agent runs saved to transcript first, judge scores transcripts afterward. No concurrent model loading needed.
+- **Agent model**: `claude-haiku-4-5` via Anthropic API (native high-speed tool-calling)
+- **Judge model**: `claude-haiku-4-5` via Anthropic API (categorical rubric scoring for completion and fix quality)
+- **SDK**: Anthropic Python SDK (`anthropic`), no agent framework (LangChain/AutoGen/etc. deliberately avoided)
+- **Execution**: sequential — agent runs saved to trace first, judge scores traces afterward.
 - **Hosting**: public GitHub repo, single repo (not split)
 
 ## Setup checklist
 ```bash
-# 1. Install Ollama (if not already)
-curl -fsSL https://ollama.com/install.sh | sh
+# 1. Create .env with API key
+echo "ANTHROPIC_API_KEY=your_key_here" > .env
 
-# 2. Pull both models
-ollama pull qwen3:8b
-ollama pull llama3.1:8b
-
-# 3. Verify tool-calling support on the agent model
-ollama show qwen3:8b
-# Confirm "tools" appears under Capabilities
-
-# 4. Install Python client
-pip install ollama
+# 2. Install dependencies using uv
+uv sync
 ```
 
 ## Repo structure to scaffold
@@ -103,26 +97,22 @@ def run_tests() -> dict:
 
 ### Basic agent loop (`agents/issue_resolver.py`)
 ```python
-from ollama import chat
+from anthropic import Anthropic
 from tools import read_file, edit_file, run_tests
 
 MAX_TURNS = 5  # decide per-task during dataset-writing, per outline
 
 def resolve_issue(task_description: str, target_file: str, log: list) -> dict:
+    client = Anthropic()
     messages = [
-        {"role": "system", "content": (
-            "You are a debugging agent. You have tools to read files, "
-            "edit files, and run tests. Fix the described bug, then verify "
-            "with run_tests. Stop once tests pass."
-        )},
         {"role": "user", "content": f"{task_description}\nFile: {target_file}"},
     ]
 
     for turn in range(MAX_TURNS):
-        response = chat(
-            model="qwen3:8b",
+        response = client.messages.create(
+            model="claude-haiku-4-5",
             messages=messages,
-            tools=[read_file, edit_file, run_tests],
+            tools=TOOL_DEFINITIONS,
         )
         # TODO: log every turn to `log` for later eval — this trace IS
         # what tool_correctness.py, trajectory.py, and fix_quality.py read.

@@ -1,6 +1,8 @@
-# Understanding the Implementation & Design Decisions
+# Understanding the Implementation & Code Map [ARCHIVED REFERENCE]
 
-Good starting point — `run_harness.py` is the right file to read first since it's the entry point that wires everything together. Here's the recommended reading order:
+> **Note**: Implementation is complete. The active Python codebase (`run_harness.py`, `agents/`, `evals/`, `judges/`) and `README.md` are the primary source of truth.
+
+`run_harness.py` is the entry point that wires everything together. Recommended code reading order:
 
 ---
 

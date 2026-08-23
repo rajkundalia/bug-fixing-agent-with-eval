@@ -1,5 +1,7 @@
-# Agent Evals — Implementation Brief
+# Agent Evals — Implementation Brief [OBSOLETE - ARCHIVED]
 *Single handoff document for the implementation thread. Consolidates `agent-evals-outline.md` + `eval-project-starter.md`.*
+
+> **OBSOLETE**: Implementation is complete. Refer to `README.md` and the active python codebase (`agents/`, `evals/`, `judges/`) as the source of truth.
 
 ---
 
@@ -35,14 +37,13 @@ The project should be able to answer YES to all 8 of these:
 | Decision | Choice | Reason |
 |---|---|---|
 | Language | Python | — |
-| Agent model | `qwen3:8b` via Ollama | Native tool-calling, local/free |
-| Judge model | `llama3.1:8b` via Ollama | Different model family → reduces self-preference bias |
-| SDK | Raw `ollama` Python library | No agent framework (LangChain etc. avoided) — full transparency over trace, minimal dependencies |
-| Execution | Sequential | Agent runs saved to transcript first; judge scores transcripts afterward. No concurrent model loading, fits in 16GB RAM |
+| Agent model | `claude-haiku-4-5` via Anthropic API | High-speed native tool-calling |
+| Judge model | `claude-haiku-4-5` via Anthropic API | Categorical rubric scoring for completion and fix quality |
+| SDK | Anthropic Python SDK (`anthropic`) | Raw API tool-calling — full transparency over trace, minimal dependencies |
+| Execution | Sequential | Agent runs saved to trace first; judge scores traces afterward. |
 | Hosting | Public GitHub repo (single repo) | Enables reader reproducibility + GitHub Actions regression CI |
 
-> To verify tool-calling is available: `ollama show qwen3:8b` — confirm "tools" appears under Capabilities.
-> Consider `think=True` on the agent model call for better multi-tool accuracy.
+> Secret management is handled via `.env` storing `ANTHROPIC_API_KEY`.
 
 ---
 
@@ -131,26 +132,22 @@ def run_tests() -> dict:
 
 ### `agents/issue_resolver.py`
 ```python
-from ollama import chat
+from anthropic import Anthropic
 from tools import read_file, edit_file, run_tests
 
 MAX_TURNS = 5  # decide per-task during dataset-writing
 
 def resolve_issue(task_description: str, target_file: str, log: list) -> dict:
+    client = Anthropic()
     messages = [
-        {"role": "system", "content": (
-            "You are a debugging agent. You have tools to read files, "
-            "edit files, and run tests. Fix the described bug, then verify "
-            "with run_tests. Stop once tests pass."
-        )},
         {"role": "user", "content": f"{task_description}\nFile: {target_file}"},
     ]
 
     for turn in range(MAX_TURNS):
-        response = chat(
-            model="qwen3:8b",
+        response = client.messages.create(
+            model="claude-haiku-4-5",
             messages=messages,
-            tools=[read_file, edit_file, run_tests],
+            tools=TOOL_DEFINITIONS,
         )
         # TODO: log every turn to `log` — this trace IS what the evaluators read.
         # Capture: turn number, tool called, args passed, tool result,
@@ -290,14 +287,9 @@ Target finding: *"Removing `run_tests` dropped task-completion scores from 0.81 
 ## Setup checklist
 
 ```bash
-# 1. Pull both models
-ollama pull qwen3:8b
-ollama pull llama3.1:8b
+# 1. Create .env with API key
+echo "ANTHROPIC_API_KEY=your_key_here" > .env
 
-# 2. Verify tool-calling on the agent model
-ollama show qwen3:8b
-# Confirm "tools" appears under Capabilities
-
-# 3. Install Python client
-pip install ollama pytest
+# 2. Install dependencies using uv
+uv sync
 ```
