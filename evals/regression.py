@@ -6,12 +6,16 @@ under the current config and flags any that have regressed (were passing
 under a previous run, now fail).
 
 Usage pattern:
-  1. Run the full dataset → save results to a JSON file.
+  1. Run the full dataset → save results to a JSON file (via run_harness.py).
   2. After any prompt/model/tool change, run again → compare against saved.
-  3. Any task that was passing before and fails now is a regression.
+  3. Call evaluate_regression(current_results, baseline_results) to surface
+     which tasks went from PASS → FAIL (regressions) or FAIL → PASS (improvements).
 
-This file provides the comparison logic. The actual re-running is done
-by the main run_harness.py script.
+Note: This module is a comparison utility library, not auto-invoked by the
+harness. Callers must load two results JSON files and pass them in manually.
+For automated cross-config comparison, see reports/compare_configs.py which
+uses this module's logic internally. To use in CI, load the golden baseline
+file from a known-good run and compare against the latest run output.
 """
 import json
 from pathlib import Path
@@ -64,9 +68,9 @@ def evaluate_regression(
 
     summary_parts = []
     if regressions:
-        summary_parts.append(f"⚠ {len(regressions)} regression(s): {regressions}")
+        summary_parts.append(f"[!] {len(regressions)} regression(s): {regressions}")
     if improvements:
-        summary_parts.append(f"✓ {len(improvements)} improvement(s): {improvements}")
+        summary_parts.append(f"[+] {len(improvements)} improvement(s): {improvements}")
     if not regressions and not improvements:
         summary_parts.append("No regressions. All previously-passing tasks still pass.")
 
@@ -76,3 +80,44 @@ def evaluate_regression(
         "unchanged": unchanged,
         "summary": " | ".join(summary_parts),
     }
+
+
+if __name__ == "__main__":
+    import sys
+
+    if len(sys.argv) != 3:
+        print("Usage: uv run python evals/regression.py <baseline_results.json> <current_results.json>")
+        print("")
+        print("Example:")
+        print("  uv run python evals/regression.py \\")
+        print("    reports/results_config_baseline_20260823_084331.json \\")
+        print("    reports/results_config_baseline_20260824_120000.json")
+        print("")
+        print("Use this to detect regressions between two runs of the SAME config over time")
+        print("(e.g. before and after a model update or prompt tweak).")
+        print("For cross-config comparison, use: uv run python reports/compare_configs.py")
+        sys.exit(1)
+
+    baseline_path, current_path = sys.argv[1], sys.argv[2]
+    baseline = load_results(baseline_path)
+    current = load_results(current_path)
+
+    report = evaluate_regression(current_results=current, baseline_results=baseline)
+
+    print(f"\nBaseline : {baseline_path}")
+    print(f"Current  : {current_path}")
+    print(f"\nSummary  : {report['summary']}")
+
+    if report["regressions"]:
+        print(f"\n[!] Regressions ({len(report['regressions'])}):")
+        for tid in report["regressions"]:
+            print(f"   - {tid}  [was PASS -> now FAIL]")
+
+    if report["improvements"]:
+        print(f"\n[+] Improvements ({len(report['improvements'])}):")
+        for tid in report["improvements"]:
+            print(f"   - {tid}  [was FAIL -> now PASS]")
+
+    print(f"\n   Unchanged: {len(report['unchanged'])} task(s)")
+    sys.exit(1 if report["regressions"] else 0)
+

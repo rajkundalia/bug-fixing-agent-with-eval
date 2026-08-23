@@ -4,7 +4,7 @@ run_judge.py
 Decoupled post-processing LLM Judge evaluator.
 
 Reads saved traces (`reports/traces_*.json`) and results (`reports/results_*.json`),
-runs the LLM-as-a-judge (`llama3.2:3b`) on each task trace, and updates the results file
+runs the LLM-as-a-judge (`claude-haiku-4-5`) on each task trace, and updates the results file
 with task_completion and fix_quality verdicts.
 
 Usage:

@@ -78,6 +78,15 @@ def run_one(task: dict, config: dict, use_llm_judge: bool) -> dict:
 
     result = resolve_issue(task=task, config=config)
 
+    # Capture the agent's diff against HEAD (before any git reset)
+    # This gives the LLM judge a concrete before/after view of what changed.
+    diff_proc = subprocess.run(
+        ["git", "diff", "src/"],
+        capture_output=True,
+        text=True,
+    )
+    agent_diff = diff_proc.stdout.strip() or "(no diff captured)"
+
     # Rule-based evals (always run)
     outcome = evaluate_outcome(result, task)
     print(f"{'PASS' if outcome['passed'] else 'FAIL'} ({result['turns_used']} turns, {result['total_ms']}ms)")
@@ -109,7 +118,7 @@ def run_one(task: dict, config: dict, use_llm_judge: bool) -> dict:
     # LLM-judge evals (optional — slow, costs model time)
     if use_llm_judge:
         task_completion_result = evaluate_task_completion(result, task)
-        fix_quality_result = evaluate_fix_quality(result, task)
+        fix_quality_result = evaluate_fix_quality(result, task, agent_diff=agent_diff)
         row["task_completion_verdict"] = task_completion_result.get("verdict")
         row["task_completion_score"] = task_completion_result.get("score")
         row["task_completion_rationale"] = task_completion_result.get("rationale")

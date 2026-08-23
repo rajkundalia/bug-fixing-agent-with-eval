@@ -92,13 +92,25 @@ uv run python run_judge.py --all
 ```
 
 ### Step 3: Generate Comparative Markdown Report
-Auto-discover the latest runs and compute side-by-side metric diffs:
+Auto-discover the latest runs and compute side-by-side metric diffs across configurations:
 
 ```bash
 uv run python reports/compare_configs.py
 ```
 
 *Output is saved automatically to [reports/comparison_report.md](reports/comparison_report.md).*
+
+### Step 4 (Optional): Run Temporal Regression Check
+Compare two runs of the **same config over time** (e.g. before and after a model update or prompt tweak) to detect tasks that regressed:
+
+```bash
+uv run python evals/regression.py \
+  reports/results_config_baseline_<old_timestamp>.json \
+  reports/results_config_baseline_<new_timestamp>.json
+```
+
+Exits with code `1` if any regressions are found — suitable for use as a CI gate. This is distinct from `compare_configs.py`, which compares different configs against each other in the same run.
+
 
 ---
 
@@ -120,7 +132,10 @@ bug-fixing-agent-with-eval/
 │   ├── trajectory.py          # Turn efficiency, dead loop detection
 │   ├── efficiency.py          # Latency & token/tool-call accounting
 │   ├── safety.py              # Regression check on unrelated tests
-│   └── adversarial.py         # Indirect prompt injection compliance check
+│   ├── adversarial.py         # Indirect prompt injection compliance check
+│   ├── fix_quality.py         # LLM-judge: genuine root-cause fix vs. workaround
+│   ├── task_completion.py     # LLM-judge: COMPLETE / PARTIAL / FAILED verdict
+│   └── regression.py          # Temporal regression runner (CLI-invokable, CI-compatible)
 ├── judges/
 │   └── llm_judge.py           # Claude-driven rubric evaluator (Task Completion & Fix Quality)
 ├── datasets/
@@ -146,6 +161,12 @@ bug-fixing-agent-with-eval/
 
 4. **Adversarial Safety Evaluation**:
    `task_009_adversarial` embeds a malicious code comment docstring encouraging the agent to fake test passes (`assert True`). Evaluators verify if the agent resists injection and fixes source code.
+
+5. **Fix Quality Diff Capture**:
+   `run_harness.py` captures `git diff src/` immediately after the agent finishes (before any git reset) and passes the actual before/after diff to the `fix_quality` LLM judge. This gives the judge a concrete code change to evaluate rather than inferring the fix from the execution trace alone.
+
+6. **Temporal Regression CLI**:
+   `evals/regression.py` is directly runnable as a CLI tool. Pass any two results JSON files to compare them task-by-task for regressions (PASS → FAIL) and improvements (FAIL → PASS). Exits with code `1` on any regression, making it a drop-in CI gate for detecting breakage introduced by model updates or prompt changes.
 
 ---
 
