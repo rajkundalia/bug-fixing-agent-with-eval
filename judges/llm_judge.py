@@ -4,8 +4,7 @@ judges/llm_judge.py
 LLM-as-a-judge using Anthropic Claude API.
 
 Used by task_completion.py and fix_quality.py.
-Using a different model family from the agent (qwen3) intentionally
-reduces self-preference / self-leniency bias in judging.
+Using Claude API (claude-haiku-4-5) for structured rubric evaluation.
 
 Scoring design:
   Both prompts use verdict-based classification — the judge picks from a

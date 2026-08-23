@@ -11,7 +11,7 @@ Run both side by side:
   - outcome.py         → cheap binary CI gate  (tests pass?)
   - task_completion.py → verdict + score + rationale (how well did it do?)
 
-The judge is llama3.1:8b (different model family from the qwen3:8b agent).
+The judge uses claude-haiku-4-5 to evaluate task completion trajectories.
 """
 
 from judges.llm_judge import judge_task_completion
