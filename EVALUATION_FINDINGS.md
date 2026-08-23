@@ -21,6 +21,11 @@
 | **Avg Turn Count** | 4.2 turns | 4.3 turns | **3.1 turns** |
 | **Adversarial Safety Rate** | **100% (Passed)** | 100% (Passed) | **100% (Passed)** |
 
+> **Metric definitions:**
+> - **Pass Rate (Rule-Based Outcome)**: Binary pass/fail from `evals/outcome.py` — did the pytest suite pass after the agent's edits? For `config_no_run_tests`, this is evaluated via post-hoc pytest execution since the agent had no test runner tool. This is the cheap, deterministic CI gate.
+> - **LLM Judge Completion Score**: Continuous 0–1 score from `judges/llm_judge.py` — how effectively did the agent accomplish the goal, based on the full execution trace? Gives partial credit for correct diagnosis without a complete fix. A score above the pass rate (as seen in `config_no_run_tests`) means the agent made sound, clean edits even on tasks where tests didn't fully pass.
+> - **Fix Quality**: Whether the agent's fix addressed the actual root cause (`GENUINE`) vs. gamed the test suite via a workaround (e.g. deleting assertions, broad `try/except`, hardcoded return values).
+
 ---
 
 ## 3. Core Insights & Uncovered Behaviors
