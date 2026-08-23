@@ -95,6 +95,8 @@ def resolve_issue(task: dict, config: dict) -> dict:
             tools=tools if tools else anthropic.NOT_GIVEN,
         )
 
+        # Extract all tool_use blocks from the response.
+        # Note: Anthropic Messages API supports parallel tool calling (multiple tool_use blocks in a single turn).
         tool_blocks = [block for block in response.content if block.type == "tool_use"]
 
         if tool_blocks:
