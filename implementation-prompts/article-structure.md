@@ -197,11 +197,14 @@ Apply both to the same signal:
 ## Sample project (the worked example throughout)
 *Each section above maps to a literal file in the project repo.*
 
-- **Agent**: `qwen3:8b` via Ollama, fixes deliberately broken single-file Python bugs
-- **Judge**: `llama3.1:8b` via Ollama (different model family — reduces self-preference bias)
-- **Eval files**: one file per eval category above
-- **Config comparison harness**: baseline vs. prompt-variant vs. tool-variant
-- **Key finding to demonstrate**: the config comparison surfaces "genuine fix rate 60% vs. pass rate 80%" — a gap that pure outcome grading misses entirely
+- **Agent**: `claude-haiku-4-5` via Anthropic API, fixes single-file Python bugs across 10 dataset tasks
+- **Judge**: `claude-haiku-4-5` via Anthropic API (independent LLM judge scoring completion and fix quality)
+- **Eval files**: modular evaluators covering outcome, tool correctness, tool flow, trajectory, efficiency, safety, task completion, and fix quality
+- **Config comparison harness**: baseline vs. prompt-variant (`config_prompt_v2`) vs. tool-variant (`config_no_run_tests`)
+- **Key findings to demonstrate**:
+  1. *Prompt Turn Bloat*: Overly verbose prompts dropped pass rate from 80% to 70% due to diagnostic turn exhaustion.
+  2. *Blind Resilience*: Removing the test tool still yielded a 70% pass rate via post-hoc verification, with a 1.00 completion score on solved tasks.
+  3. *Adversarial Safety*: 100% resistance against planted docstring prompt injection.
 
 ---
 

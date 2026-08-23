@@ -129,23 +129,23 @@
 **Repo structure (single GitHub repo, not split):**
 ```
 agent-evals-framework/
-├── agents/            # the agent under test (qwen3:8b via Ollama, tool schemas for read_file/edit_file/run_tests)
+├── agents/            # the agent under test (claude-haiku-4-5 via Anthropic API, tool definitions for read_file/edit_file/run_tests)
 ├── evals/
 │   ├── outcome.py           # rule-based: tests pass?
 │   ├── tool_correctness.py  # rule-based: correct files opened/modified vs. known-correct answer per task
 │   ├── trajectory.py        # rule-based: attempt count, dead loops, turns-to-green
-│   ├── fix_quality.py       # LLM-judge: genuine fix vs. workaround (deleted assertion, broad try/except, edited test file instead of source) — compares diff against the actual planted root cause
-│   ├── efficiency.py        # rule-based: cost, latency, tool-call count (topic #6.3)
+│   ├── fix_quality.py       # LLM-judge: genuine fix vs. workaround — compares diff against planted root cause
+│   ├── efficiency.py        # rule-based: cost, latency, tool-call count
 │   ├── safety.py            # rule-based: did it break unrelated/previously-passing tests
 │   └── regression.py        # rule-based: same issue set re-run after every prompt/model change
 ├── judges/
-│   └── llm_judge.py    # llama3.1:8b, used specifically for trajectory "wrong hypotheses" and fix_quality.py
-├── datasets/            # the 10-15 broken-file task scenarios, each with known-correct file(s) + planted root cause
+│   └── llm_judge.py         # claude-haiku-4-5, used for task_completion.py and fix_quality.py
+├── datasets/            # 10 broken-file task scenarios with known-correct answer & planted root cause
 └── reports/             # tasks × evaluators results table per run
 
-**Models (both local via Ollama, zero cost):**
-- Agent under test: `qwen3:8b` (native tool-calling)
-- Judge: `llama3.1:8b` (different model family — reduces self-preference bias in judging)
+**Models (Anthropic Messages API):**
+- Agent under test: `claude-haiku-4-5` (native tool-calling)
+- Judge: `claude-haiku-4-5` (categorical rubric scoring for completion and fix quality)
 - Sequential execution only — agent runs saved to trace/transcript first, judge scores transcripts afterward; no concurrent loading needed, fits comfortably in 16GB RAM
 
 **Eval categories (finalized):**
@@ -184,8 +184,7 @@ agent-evals-framework/
 
 ## Open items — all resolved
 - [x] Sample project finalized: local GitHub-issue-resolution agent, single-repo eval framework (see section 10)
-- [x] Framework/models: `qwen3:8b` (agent) + `llama3.1:8b` (judge), both local via Ollama, zero cost
-- [x] Claude Agent SDK considered and declined (not "not applicable" — correction: Ollama added native Anthropic Messages API support in Jan 2026, so Claude Agent SDK CAN point at a local Ollama server for free via env vars; genuinely viable now). Declined anyway for this project because: (a) works best with Claude-Code-tuned models like GLM-4.7-Flash/Qwen3-Coder, reopening the already-locked qwen3:8b/llama3.1:8b decision; (b) ships its own built-in tools/logging conventions that work against needing full control over custom trace data for the evaluators; (c) adds an abstraction layer between reader and the mechanics the article is trying to teach; (d) still needs manual instrumentation for DeepEval-style tracing either way, so no work saved
-- [x] Agent implementation: raw `ollama` Python library with native tool-calling (functions passed directly as `tools=[...]`), no agent framework — chosen for transparency, minimal dependencies, and full control over trace logging for custom evaluators
+- [x] Framework/models: `claude-haiku-4-5` (agent and judge) via Anthropic API
+- [x] Agent implementation: raw Anthropic Messages API tool-calling (`anthropic` library), no agent framework — chosen for transparency, minimal dependencies, and full control over trace logging for custom evaluators
 - [x] Tool-naming tone: mostly framework-agnostic in main body, name tools when clearest (see intro)
 - [x] Terminology note: written into introduction section
