@@ -172,15 +172,34 @@ def print_report(comparison: dict) -> None:
 
 if __name__ == "__main__":
     import sys
-    if len(sys.argv) < 3:
-        print("Usage: uv run python reports/compare_configs.py <results_a.json> <results_b.json> [label_a] [label_b]")
-        sys.exit(1)
+    reports_dir = Path("reports")
 
-    path_a, path_b = sys.argv[1], sys.argv[2]
-    label_a = sys.argv[3] if len(sys.argv) > 3 else Path(path_a).stem
-    label_b = sys.argv[4] if len(sys.argv) > 4 else Path(path_b).stem
+    if len(sys.argv) >= 3:
+        path_a, path_b = sys.argv[1], sys.argv[2]
+        label_a = sys.argv[3] if len(sys.argv) > 3 else Path(path_a).stem
+        label_b = sys.argv[4] if len(sys.argv) > 4 else Path(path_b).stem
 
-    results_a = load_results(path_a)
-    results_b = load_results(path_b)
-    report = compare(results_a, results_b, label_a, label_b)
-    print_report(report)
+        results_a = load_results(path_a)
+        results_b = load_results(path_b)
+        report = compare(results_a, results_b, label_a, label_b)
+        print_report(report)
+    else:
+        # Find latest results for each known config
+        configs = ["config_baseline", "config_prompt_v2", "config_no_run_tests"]
+        latest_by_config = {}
+        for cfg in configs:
+            matching = sorted(reports_dir.glob(f"results_{cfg}_*.json"))
+            if matching:
+                latest_by_config[cfg] = matching[-1]
+
+        if "config_baseline" in latest_by_config and "config_prompt_v2" in latest_by_config:
+            path_a = latest_by_config["config_baseline"]
+            path_b = latest_by_config["config_prompt_v2"]
+            report = compare(load_results(path_a), load_results(path_b), "config_baseline", "config_prompt_v2")
+            print_report(report)
+
+        if "config_baseline" in latest_by_config and "config_no_run_tests" in latest_by_config:
+            path_a = latest_by_config["config_baseline"]
+            path_b = latest_by_config["config_no_run_tests"]
+            report = compare(load_results(path_a), load_results(path_b), "config_baseline", "config_no_run_tests")
+            print_report(report)
