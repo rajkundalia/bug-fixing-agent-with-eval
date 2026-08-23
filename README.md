@@ -183,5 +183,6 @@ bug-fixing-agent-with-eval/
 ---
 
 ## Documentation & Articles
-- [EVALUATION_FINDINGS.md](EVALUATION_FINDINGS.md) — Comprehensive empirical findings from the 3-way benchmark run.
+- [EVALUATION_FINDINGS.md](EVALUATION_FINDINGS.md) — Comprehensive empirical findings from the initial 3-way benchmark run.
+- [EVALUATION_FINDINGS_2.md](EVALUATION_FINDINGS_2.md) — Empirical findings from Run 2 with extended efficiency, token, and USD cost accounting.
 - [implementation-prompts/understanding-the-implementation.md](implementation-prompts/understanding-the-implementation.md) — Archived architectural map and code reading guide.
