@@ -75,6 +75,7 @@ def main():
     parser = argparse.ArgumentParser(description="Standalone LLM-Judge evaluator")
     parser.add_argument("file", nargs="?", default=None, help="Path to specific results_*.json file")
     parser.add_argument("--config", default=None, help="Config ID to judge (finds latest results file)")
+    parser.add_argument("--all", action="store_true", help="Judge the latest results file for ALL configs")
 
     args = parser.parse_args()
 
@@ -83,7 +84,24 @@ def main():
 
     reports_dir = Path("reports")
 
-    if args.file:
+    if args.all:
+        all_res_files = sorted(reports_dir.glob("results_*.json"))
+        # Group by config_id to find latest file per config
+        latest_by_config = {}
+        for rf in all_res_files:
+            # Filename pattern: results_{config_id}_{timestamp}.json
+            parts = rf.stem.split("_")
+            if len(parts) >= 3:
+                config_id = "_".join(parts[1:-2]) if len(parts) > 3 else parts[1]
+                latest_by_config[config_id] = rf
+
+        for config_id, latest_res in latest_by_config.items():
+            latest_tr = reports_dir / latest_res.name.replace("results_", "traces_")
+            if latest_tr.exists():
+                print(f"\n--- Judging Config: {config_id} ---")
+                judge_file(latest_res, latest_tr, tasks_by_id)
+
+    elif args.file:
         res_path = Path(args.file)
         tr_path = reports_dir / res_path.name.replace("results_", "traces_")
         if not res_path.exists() or not tr_path.exists():
