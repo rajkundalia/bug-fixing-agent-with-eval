@@ -1,4 +1,4 @@
-# Benchmark Configuration Comparison Report
+# Benchmark Configuration Comparison Report (Run 1 — Baseline)
 *Generated: 2026-08-23 09:07 | Agent Model: `claude-haiku-4-5` | Judge Model: `claude-haiku-4-5`*
 
 ## Comparison: config_baseline vs config_prompt_v2

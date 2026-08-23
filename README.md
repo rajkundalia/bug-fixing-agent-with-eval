@@ -108,7 +108,9 @@ Auto-discover the latest runs and compute side-by-side metric diffs across confi
 uv run python reports/compare_configs.py
 ```
 
-*Output is saved automatically to [reports/comparison_report.md](reports/comparison_report.md).*
+*Saved benchmark reports:*
+- **Run 1 (Baseline)**: [reports/comparison_report_1.md](reports/comparison_report_1.md)
+- **Run 2 (Extended Efficiency & USD Cost Metrics)**: [reports/comparison_report_2.md](reports/comparison_report_2.md)
 
 ### Step 4 (Optional): Run Temporal Regression Check
 Compare two runs of the **same config over time** (e.g. before and after a model update or prompt tweak) to detect tasks that regressed:
