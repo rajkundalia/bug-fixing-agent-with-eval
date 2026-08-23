@@ -131,9 +131,9 @@ def compare_tool_flows(flow_a: list[str], flow_b: list[str], label_a: str = "A",
 
     parts = []
     if verification_dropped:
-        parts.append(f"run_tests disappeared from flow ({label_a}→{label_b})")
+        parts.append(f"run_tests disappeared from flow ({label_a}->{label_b})")
     if verification_added:
-        parts.append(f"run_tests appeared in flow ({label_a}→{label_b})")
+        parts.append(f"run_tests appeared in flow ({label_a}->{label_b})")
     if length_delta > 0:
         parts.append(f"flow got {length_delta} steps longer in {label_b}")
     elif length_delta < 0:

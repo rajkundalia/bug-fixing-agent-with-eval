@@ -147,7 +147,7 @@ def print_report(comparison: dict) -> None:
     print(f"{'='*70}")
     print(f"Summary: {comparison['summary']}")
     print(f"\nPer-task breakdown:")
-    print(f"{'Task ID':<25} {'Out A':>6} {'Out B':>6} {'Verdict A':>10} {'Verdict B':>10} {'Δ Score':>8}  Notes")
+    print(f"{'Task ID':<25} {'Out A':>6} {'Out B':>6} {'Verdict A':>10} {'Verdict B':>10} {'dScore':>8}  Notes")
     print("-" * 90)
     for task_item in comparison["per_task"]:
         notes = []
@@ -170,9 +170,43 @@ def print_report(comparison: dict) -> None:
     print()
 
 
+def save_markdown_report(reports_list: list[dict], output_path: Path) -> None:
+    """Write markdown comparison report to disk."""
+    import datetime
+    now_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
+    lines = [
+        "# Benchmark Configuration Comparison Report",
+        f"*Generated: {now_str} | Agent Model: `claude-haiku-4-5` | Judge Model: `claude-haiku-4-5`*\n"
+    ]
+    for report in reports_list:
+        lines.append(f"## Comparison: {report['label_a']} vs {report['label_b']}\n")
+        lines.append(f"**Summary**: {report['summary']}\n")
+        lines.append("| Task ID | Out A | Out B | Verdict A | Verdict B | Δ Score | Notes |")
+        lines.append("| :--- | :---: | :---: | :---: | :---: | :---: | :--- |")
+        for task_item in report["per_task"]:
+            notes = []
+            if task_item["outcome_changed"]:
+                notes.append("outcome changed")
+            flow_summary = task_item.get("flow_diff", {}).get("summary", "")
+            if flow_summary and flow_summary != "Flows are identical in shape.":
+                notes.append(flow_summary)
+            verdict_a = task_item.get("verdict_a") or "—"
+            verdict_b = task_item.get("verdict_b") or "—"
+            delta_str = str(task_item['score_delta']) if task_item['score_delta'] is not None else "N/A"
+            out_a_str = "PASS" if task_item['outcome_a'] else "FAIL"
+            out_b_str = "PASS" if task_item['outcome_b'] else "FAIL"
+            notes_str = "; ".join(notes)
+            lines.append(f"| `{task_item['task_id']}` | {out_a_str} | {out_b_str} | {verdict_a} | {verdict_b} | {delta_str} | {notes_str} |")
+        lines.append("\n---\n")
+
+    output_path.write_text("\n".join(lines), encoding="utf-8")
+    print(f"Saved Markdown Report to: {output_path}")
+
+
 if __name__ == "__main__":
     import sys
     reports_dir = Path("reports")
+    all_reports = []
 
     if len(sys.argv) >= 3:
         path_a, path_b = sys.argv[1], sys.argv[2]
@@ -183,6 +217,7 @@ if __name__ == "__main__":
         results_b = load_results(path_b)
         report = compare(results_a, results_b, label_a, label_b)
         print_report(report)
+        all_reports.append(report)
     else:
         # Find latest results for each known config
         configs = ["config_baseline", "config_prompt_v2", "config_no_run_tests"]
@@ -197,9 +232,14 @@ if __name__ == "__main__":
             path_b = latest_by_config["config_prompt_v2"]
             report = compare(load_results(path_a), load_results(path_b), "config_baseline", "config_prompt_v2")
             print_report(report)
+            all_reports.append(report)
 
         if "config_baseline" in latest_by_config and "config_no_run_tests" in latest_by_config:
             path_a = latest_by_config["config_baseline"]
             path_b = latest_by_config["config_no_run_tests"]
             report = compare(load_results(path_a), load_results(path_b), "config_baseline", "config_no_run_tests")
             print_report(report)
+            all_reports.append(report)
+
+    if all_reports:
+        save_markdown_report(all_reports, reports_dir / "comparison_report.md")
