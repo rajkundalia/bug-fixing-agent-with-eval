@@ -77,10 +77,10 @@ def run_one(task: dict, config: dict, use_llm_judge: bool) -> dict:
     baseline_failures = _capture_baseline_failures()
 
     result = resolve_issue(task=task, config=config)
-    print(f"{'PASS' if result['outcome'] else 'FAIL'} ({result['turns_used']} turns, {result['total_ms']}ms)")
 
     # Rule-based evals (always run)
     outcome = evaluate_outcome(result, task)
+    print(f"{'PASS' if outcome['passed'] else 'FAIL'} ({result['turns_used']} turns, {result['total_ms']}ms)")
     tool_correctness = evaluate_tool_correctness(result, task)
     tool_flow = evaluate_tool_flow(result)
     trajectory = evaluate_trajectory(result)
