@@ -32,7 +32,7 @@ def judge_file(results_file: Path, traces_file: Path, tasks_by_id: dict):
     results = json.loads(results_file.read_text(encoding="utf-8"))
     traces = json.loads(traces_file.read_text(encoding="utf-8"))
 
-    trace_map = {t["task_id"]: t["trace"] for t in traces}
+    trace_map = {trace_entry["task_id"]: trace_entry["trace"] for trace_entry in traces}
 
     updated_results = []
     for row in results:
@@ -79,7 +79,7 @@ def main():
     args = parser.parse_args()
 
     all_tasks = load_tasks()
-    tasks_by_id = {t["id"]: t for t in all_tasks}
+    tasks_by_id = {task["id"]: task for task in all_tasks}
 
     reports_dir = Path("reports")
 

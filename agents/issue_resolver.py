@@ -63,7 +63,7 @@ def resolve_issue(task: dict, config: dict) -> dict:
     system_prompt: str = config["system_prompt"]
     enabled_tools: list[str] = config.get("tools", ["read_file", "edit_file", "run_tests"])
 
-    tools = [ANTHROPIC_TOOL_DEFINITIONS[t] for t in enabled_tools if t in ANTHROPIC_TOOL_DEFINITIONS]
+    tools = [ANTHROPIC_TOOL_DEFINITIONS[tool_name] for tool_name in enabled_tools if tool_name in ANTHROPIC_TOOL_DEFINITIONS]
 
     user_content = (
         f"{task['description']}\n"
@@ -95,47 +95,48 @@ def resolve_issue(task: dict, config: dict) -> dict:
             tools=tools if tools else anthropic.NOT_GIVEN,
         )
 
-        has_tool_use = any(block.type == "tool_use" for block in response.content)
+        tool_blocks = [block for block in response.content if block.type == "tool_use"]
 
-        if has_tool_use:
+        if tool_blocks:
             messages.append({"role": "assistant", "content": response.content})
             tool_results_content = []
 
-            for block in response.content:
-                if block.type == "tool_use":
-                    function_name = block.name
-                    function_args = block.input or {}
-                    tool_use_id = block.id
+            is_parallel = len(tool_blocks) > 1
+            for call_idx, block in enumerate(tool_blocks, start=1):
+                function_name = block.name
+                function_args = block.input or {}
+                tool_use_id = block.id
 
-                    print(f"\n    [Turn {turn+1}] Tool Call -> {function_name}({function_args})", flush=True)
+                turn_label = f"[Turn {turn+1}.{call_idx}] (Parallel)" if is_parallel else f"[Turn {turn+1}]"
+                print(f"\n    {turn_label} Tool Call -> {function_name}({function_args})", flush=True)
 
-                    if function_name in TOOL_REGISTRY and function_name in enabled_tools:
-                        try:
-                            tool_result = TOOL_REGISTRY[function_name](**function_args)
-                        except Exception as err:
-                            tool_result = {"error": f"Failed to execute '{function_name}': {err}"}
-                    else:
-                        tool_result = {"error": f"Tool '{function_name}' not available."}
+                if function_name in TOOL_REGISTRY and function_name in enabled_tools:
+                    try:
+                        tool_result = TOOL_REGISTRY[function_name](**function_args)
+                    except Exception as err:
+                        tool_result = {"error": f"Failed to execute '{function_name}': {err}"}
+                else:
+                    tool_result = {"error": f"Tool '{function_name}' not available."}
 
-                    entry = {
-                        "turn": turn,
-                        "tool": function_name,
-                        "args": function_args,
-                        "tool_result": tool_result,
-                        "model_content": "",
-                        "timestamp_ms": turn_start_ms,
-                    }
-                    trace.append(entry)
+                entry = {
+                    "turn": turn,
+                    "tool": function_name,
+                    "args": function_args,
+                    "tool_result": tool_result,
+                    "model_content": "",
+                    "timestamp_ms": turn_start_ms,
+                }
+                trace.append(entry)
 
-                    tool_results_content.append({
-                        "type": "tool_result",
-                        "tool_use_id": tool_use_id,
-                        "content": json.dumps(tool_result),
-                    })
+                tool_results_content.append({
+                    "type": "tool_result",
+                    "tool_use_id": tool_use_id,
+                    "content": json.dumps(tool_result),
+                })
 
-                    if function_name == "run_tests" and isinstance(tool_result, dict):
-                        if tool_result.get("passed"):
-                            outcome = True
+                if function_name == "run_tests" and isinstance(tool_result, dict):
+                    if tool_result.get("passed"):
+                        outcome = True
 
             messages.append({"role": "user", "content": tool_results_content})
             if outcome:
