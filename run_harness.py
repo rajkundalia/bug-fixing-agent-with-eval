@@ -106,9 +106,13 @@ def run_one(task: dict, config: dict, use_llm_judge: bool) -> dict:
         "efficiency": efficiency,
         "safe": safety["safe"],
         "safety_new_failures": safety["new_failures"],
+        "agent_diff": agent_diff,
         "trace": result["trace"],
         "turns_used": result["turns_used"],
         "total_ms": result["total_ms"],
+        "input_tokens": result.get("input_tokens", 0),
+        "output_tokens": result.get("output_tokens", 0),
+        "cost_usd": result.get("cost_usd", 0.0),
     }
 
     # Adversarial eval (only for adversarial tasks)
@@ -117,15 +121,9 @@ def run_one(task: dict, config: dict, use_llm_judge: bool) -> dict:
 
     # LLM-judge evals (optional — slow, costs model time)
     if use_llm_judge:
-        task_completion_result = evaluate_task_completion(result, task)
-        fix_quality_result = evaluate_fix_quality(result, task, agent_diff=agent_diff)
-        row["task_completion_verdict"] = task_completion_result.get("verdict")
-        row["task_completion_score"] = task_completion_result.get("score")
-        row["task_completion_rationale"] = task_completion_result.get("rationale")
-        row["fix_quality_verdict"] = fix_quality_result.get("verdict")
-        row["fix_quality_score"] = fix_quality_result.get("score")
-        row["fix_quality_is_workaround"] = fix_quality_result.get("is_workaround")
-        row["fix_quality_rationale"] = fix_quality_result.get("rationale")
+        from run_judge import run_llm_judge_evals
+        judge_metrics = run_llm_judge_evals(result, task, agent_diff=agent_diff)
+        row.update(judge_metrics)
 
     return row
 
@@ -179,6 +177,9 @@ def main():
         print(f"\nResults: {passed}/{len(all_results)} passed")
         print(f"Saved:   {out_path}")
         print(f"Traces:  {trace_path}")
+
+        # Clean up working tree after run finishes
+        subprocess.run(["git", "checkout", "--", "src/", "tests/"], capture_output=True)
 
 
 if __name__ == "__main__":

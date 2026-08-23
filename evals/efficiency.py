@@ -48,6 +48,10 @@ def evaluate_efficiency(result: dict) -> dict:
     if counts["edit_file"] > 4:
         notes.append(f"high edit count ({counts['edit_file']}) — may indicate flailing")
 
+    input_tokens: int = result.get("input_tokens", 0)
+    output_tokens: int = result.get("output_tokens", 0)
+    cost_usd: float = result.get("cost_usd", round((input_tokens / 1_000_000 * 1.00) + (output_tokens / 1_000_000 * 5.00), 6))
+
     return {
         "task_id": task_id,
         "total_ms": total_ms,
@@ -56,5 +60,9 @@ def evaluate_efficiency(result: dict) -> dict:
         "read_count": counts["read_file"],
         "test_run_count": counts["run_tests"],
         "no_tool_turns": no_tool_turns,
+        "input_tokens": input_tokens,
+        "output_tokens": output_tokens,
+        "total_tokens": input_tokens + output_tokens,
+        "cost_usd": cost_usd,
         "rationale": "; ".join(notes) if notes else "Efficiency looks normal.",
     }

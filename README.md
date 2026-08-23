@@ -82,6 +82,16 @@ uv run python run_harness.py --config config_prompt_v2
 
 # Tool Experiment: Test runner omitted (evaluates blind execution)
 uv run python run_harness.py --config config_no_run_tests
+
+# Additional Harness CLI Options:
+# Single task smoke test:
+uv run python run_harness.py --config config_baseline --task task_001_empty_list
+
+# Inline LLM Judging (runs LLM judge metrics immediately during the run):
+uv run python run_harness.py --config config_baseline --judge
+
+# Multiple configs in a single execution:
+uv run python run_harness.py --config config_baseline --config config_no_run_tests
 ```
 
 ### Step 2: Run LLM-as-a-Judge Evaluation

@@ -84,6 +84,9 @@ def resolve_issue(task: dict, config: dict) -> dict:
     outcome = False
     run_start = time.time()
 
+    total_input_tokens = 0
+    total_output_tokens = 0
+
     for turn in range(max_turns):
         turn_start_ms = int(time.time() * 1000)
 
@@ -94,6 +97,10 @@ def resolve_issue(task: dict, config: dict) -> dict:
             messages=messages,
             tools=tools if tools else anthropic.NOT_GIVEN,
         )
+
+        if hasattr(response, "usage") and response.usage:
+            total_input_tokens += getattr(response.usage, "input_tokens", 0)
+            total_output_tokens += getattr(response.usage, "output_tokens", 0)
 
         # Extract all tool_use blocks from the response.
         # Note: Anthropic Messages API supports parallel tool calling (multiple tool_use blocks in a single turn).
@@ -161,6 +168,7 @@ def resolve_issue(task: dict, config: dict) -> dict:
             break
 
     total_ms = int((time.time() - run_start) * 1000)
+    cost_usd = round((total_input_tokens / 1_000_000 * 1.00) + (total_output_tokens / 1_000_000 * 5.00), 6)
     return {
         "task_id": task["id"],
         "config_id": config["id"],
@@ -168,6 +176,9 @@ def resolve_issue(task: dict, config: dict) -> dict:
         "turns_used": len(trace),
         "outcome": outcome,
         "total_ms": total_ms,
+        "input_tokens": total_input_tokens,
+        "output_tokens": total_output_tokens,
+        "cost_usd": cost_usd,
     }
 
 

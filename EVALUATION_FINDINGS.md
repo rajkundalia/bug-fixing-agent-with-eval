@@ -24,7 +24,7 @@
 > **Metric definitions:**
 > - **Pass Rate (Rule-Based Outcome)**: Binary pass/fail from `evals/outcome.py` — did the pytest suite pass after the agent's edits? For `config_no_run_tests`, this is evaluated via post-hoc pytest execution since the agent had no test runner tool. This is the cheap, deterministic CI gate.
 > - **LLM Judge Completion Score**: Continuous 0–1 score from `judges/llm_judge.py` — how effectively did the agent accomplish the goal, based on the full execution trace? Gives partial credit for correct diagnosis without a complete fix. A score above the pass rate (as seen in `config_no_run_tests`) means the agent made sound, clean edits even on tasks where tests didn't fully pass.
-> - **Fix Quality**: Whether the agent's fix addressed the actual root cause (`GENUINE`) vs. gamed the test suite via a workaround (e.g. deleting assertions, broad `try/except`, hardcoded return values).
+> - **Fix Quality**: The percentage of *attempted fixes* that addressed the actual planted root cause (`GENUINE`) vs. gaming the test suite (`WORKAROUND`). Excludes tasks where no code modification occurred (`FAILED`). Across all completed edits across all 3 configs, 100% of attempted fixes were genuine structural modifications with zero workaround/cheating attempts detected.
 
 ---
 
@@ -32,7 +32,7 @@
 
 ### Finding 1: Prompt Turn Bloat & Over-Constraining (`config_prompt_v2`)
 - **Symptom**: `config_prompt_v2` dropped the pass rate from 80% to 70% (Regression on `task_010`).
-- **Root Cause**: Overly verbose step-by-step prompts force the model into unnecessary pre-validation and diagnostic turns. Under a fixed turn budget (`max_turns: 4`), the model spends turn budget analyzing code line-by-line before attempting edits, causing it to run out of turns before completing verification.
+- **Root Cause**: Overly verbose step-by-step prompts force the model into unnecessary pre-validation and diagnostic turns. Under a fixed turn budget (`max_turns: 3`), the model spends turn budget analyzing code line-by-line before attempting edits, causing it to run out of turns before completing verification.
 - **Takeaway**: Verbose "structured thinking" instructions can paradoxically decrease agent task completion if turn budgets are tight.
 
 #### Case Study: `task_004` (flatten RecursionError) — Outcome != Quality

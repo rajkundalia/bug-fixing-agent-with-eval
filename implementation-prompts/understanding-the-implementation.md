@@ -23,8 +23,8 @@ Pick one broken source file and its test together. The `# BUG:` comments show ex
 ### 5. `evals/outcome.py`
 Outcome evaluator — checks recorded test results or triggers a **post-hoc pytest verification** if the agent was executed without a native `run_tests` tool.
 
-### 6. `evals/tool_correctness.py` → `evals/tool_flow.py` → `evals/trajectory.py` → `evals/safety.py`
-Five rule-based evaluators in increasing complexity. All read from the same execution trace.
+### 6. `evals/tool_correctness.py` → `evals/tool_flow.py` → `evals/trajectory.py` → `evals/efficiency.py` → `evals/safety.py`
+Five rule-based trace evaluators in increasing complexity. All read from the same execution trace.
 
 ### 7. `run_judge.py` & `judges/llm_judge.py`
 The standalone LLM judge powered by `claude-haiku-4-5`. Evaluates traces for **Task Completion** (`COMPLETE`, `PARTIAL`, `FAILED`) and **Fix Quality** (`GENUINE`, `WORKAROUND`, `FAILED`). Run across all benchmark outputs via `uv run python run_judge.py --all`.

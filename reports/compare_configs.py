@@ -97,6 +97,15 @@ def compare(
         verdict_a = task_result_a.get("task_completion_verdict")
         verdict_b = task_result_b.get("task_completion_verdict")
 
+        turns_a = task_result_a.get("turns_used", 0)
+        turns_b = task_result_b.get("turns_used", 0)
+        ms_a = task_result_a.get("total_ms", 0)
+        ms_b = task_result_b.get("total_ms", 0)
+        cost_a = task_result_a.get("cost_usd", 0.0)
+        cost_b = task_result_b.get("cost_usd", 0.0)
+        tokens_a = task_result_a.get("input_tokens", 0) + task_result_a.get("output_tokens", 0)
+        tokens_b = task_result_b.get("input_tokens", 0) + task_result_b.get("output_tokens", 0)
+
         per_task.append({
             "task_id": task_id,
             "outcome_a": outcome_a,
@@ -110,11 +119,29 @@ def compare(
             "flow_diff": flow_diff,
             "flow_a": flow_a,
             "flow_b": flow_b,
+            "turns_a": turns_a,
+            "turns_b": turns_b,
+            "ms_a": ms_a,
+            "ms_b": ms_b,
+            "cost_a": cost_a,
+            "cost_b": cost_b,
+            "tokens_a": tokens_a,
+            "tokens_b": tokens_b,
         })
 
     avg_a = round(sum(scores_a) / len(scores_a), 3) if scores_a else None
     avg_b = round(sum(scores_b) / len(scores_b), 3) if scores_b else None
     delta = round(avg_b - avg_a, 3) if (avg_a is not None and avg_b is not None) else None
+
+    # Efficiency summaries
+    avg_turns_a = round(sum(pt["turns_a"] for pt in per_task) / len(per_task), 1) if per_task else 0
+    avg_turns_b = round(sum(pt["turns_b"] for pt in per_task) / len(per_task), 1) if per_task else 0
+    avg_sec_a = round(sum(pt["ms_a"] for pt in per_task) / (len(per_task) * 1000), 2) if per_task else 0
+    avg_sec_b = round(sum(pt["ms_b"] for pt in per_task) / (len(per_task) * 1000), 2) if per_task else 0
+    total_tokens_a = sum(pt["tokens_a"] for pt in per_task)
+    total_tokens_b = sum(pt["tokens_b"] for pt in per_task)
+    total_cost_a = round(sum(pt["cost_a"] for pt in per_task), 4)
+    total_cost_b = round(sum(pt["cost_b"] for pt in per_task), 4)
 
     parts = []
     if regressions:
@@ -124,6 +151,7 @@ def compare(
     if delta is not None:
         direction = "+" if delta >= 0 else ""
         parts.append(f"Avg task-completion: {avg_a} -> {avg_b} ({direction}{delta})")
+    parts.append(f"Avg Turns: {avg_turns_a} vs {avg_turns_b} | Total Cost: ${total_cost_a} vs ${total_cost_b}")
     if not parts:
         parts.append("No meaningful difference detected between configs.")
 
@@ -135,6 +163,16 @@ def compare(
         "avg_completion_a": avg_a,
         "avg_completion_b": avg_b,
         "avg_completion_delta": delta,
+        "efficiency_summary": {
+            "avg_turns_a": avg_turns_a,
+            "avg_turns_b": avg_turns_b,
+            "avg_sec_a": avg_sec_a,
+            "avg_sec_b": avg_sec_b,
+            "total_tokens_a": total_tokens_a,
+            "total_tokens_b": total_tokens_b,
+            "total_cost_a": total_cost_a,
+            "total_cost_b": total_cost_b,
+        },
         "per_task": per_task,
         "summary": " | ".join(parts),
     }
@@ -181,8 +219,24 @@ def save_markdown_report(reports_list: list[dict], output_path: Path) -> None:
     for report in reports_list:
         lines.append(f"## Comparison: {report['label_a']} vs {report['label_b']}\n")
         lines.append(f"**Summary**: {report['summary']}\n")
-        lines.append("| Task ID | Out A | Out B | Verdict A | Verdict B | Δ Score | Notes |")
-        lines.append("| :--- | :---: | :---: | :---: | :---: | :---: | :--- |")
+
+        eff = report.get("efficiency_summary", {})
+        if eff:
+            lines.append("### Efficiency & Resource Usage Breakdown\n")
+            lines.append(f"| Metric | Config A (`{report['label_a']}`) | Config B (`{report['label_b']}`) | Delta |")
+            lines.append("| :--- | :---: | :---: | :---: |")
+            turns_delta = round(eff['avg_turns_b'] - eff['avg_turns_a'], 1)
+            sec_delta = round(eff['avg_sec_b'] - eff['avg_sec_a'], 2)
+            tok_delta = eff['total_tokens_b'] - eff['total_tokens_a']
+            cost_delta = round(eff['total_cost_b'] - eff['total_cost_a'], 4)
+            lines.append(f"| **Avg Turns / Task** | {eff['avg_turns_a']} | {eff['avg_turns_b']} | {turns_delta:+} turns |")
+            lines.append(f"| **Avg Latency / Task** | {eff['avg_sec_a']}s | {eff['avg_sec_b']}s | {sec_delta:+}s |")
+            lines.append(f"| **Total Tokens** | {eff['total_tokens_a']:,} | {eff['total_tokens_b']:,} | {tok_delta:+} |")
+            lines.append(f"| **Est. Total USD Cost** | ${eff['total_cost_a']:.4f} | ${eff['total_cost_b']:.4f} | ${cost_delta:+.4f} |\n")
+
+        lines.append("### Task-by-Task Outcome & Verdicts\n")
+        lines.append("| Task ID | Out A | Out B | Verdict A | Verdict B | Δ Score | Turns A/B | Notes |")
+        lines.append("| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :--- |")
         for task_item in report["per_task"]:
             notes = []
             if task_item["outcome_changed"]:
@@ -195,8 +249,9 @@ def save_markdown_report(reports_list: list[dict], output_path: Path) -> None:
             delta_str = str(task_item['score_delta']) if task_item['score_delta'] is not None else "N/A"
             out_a_str = "PASS" if task_item['outcome_a'] else "FAIL"
             out_b_str = "PASS" if task_item['outcome_b'] else "FAIL"
+            turns_str = f"{task_item.get('turns_a', '—')} / {task_item.get('turns_b', '—')}"
             notes_str = "; ".join(notes)
-            lines.append(f"| `{task_item['task_id']}` | {out_a_str} | {out_b_str} | {verdict_a} | {verdict_b} | {delta_str} | {notes_str} |")
+            lines.append(f"| `{task_item['task_id']}` | {out_a_str} | {out_b_str} | {verdict_a} | {verdict_b} | {delta_str} | {turns_str} | {notes_str} |")
         lines.append("\n---\n")
 
     output_path.write_text("\n".join(lines), encoding="utf-8")

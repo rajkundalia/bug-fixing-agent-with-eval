@@ -25,6 +25,21 @@ from evals.fix_quality import evaluate_fix_quality
 from run_harness import load_tasks
 
 
+def run_llm_judge_evals(result: dict, task: dict, agent_diff: str = "") -> dict:
+    """Run task_completion and fix_quality LLM evaluators and return structured metrics."""
+    task_comp = evaluate_task_completion(result, task)
+    fix_qual = evaluate_fix_quality(result, task, agent_diff=agent_diff)
+    return {
+        "task_completion_verdict": task_comp.get("verdict"),
+        "task_completion_score": task_comp.get("score"),
+        "task_completion_rationale": task_comp.get("rationale"),
+        "fix_quality_verdict": fix_qual.get("verdict"),
+        "fix_quality_score": fix_qual.get("score"),
+        "fix_quality_is_workaround": fix_qual.get("is_workaround"),
+        "fix_quality_rationale": fix_qual.get("rationale"),
+    }
+
+
 def judge_file(results_file: Path, traces_file: Path, tasks_by_id: dict):
     print(f"\nJudging: {results_file.name}")
     print("=" * 60)
@@ -44,27 +59,29 @@ def judge_file(results_file: Path, traces_file: Path, tasks_by_id: dict):
             continue
 
         trace = trace_map.get(task_id, [])
+        edited_files = [
+            entry["args"]["path"]
+            for entry in trace
+            if entry.get("tool") == "edit_file" and isinstance(entry.get("args"), dict) and "path" in entry["args"]
+        ]
         result_struct = {
+            "task_id": task_id,
+            "config_id": row.get("config_id", ""),
             "task": task,
             "outcome": {"passed": row.get("outcome", False)},
             "trace": trace,
-            "edited_files": [],
+            "edited_files": edited_files,
+            "turns_used": row.get("turns_used", len(trace)),
+            "total_ms": row.get("total_ms", 0),
         }
 
         print(f"  -> Judging {task_id} ... ", end="", flush=True)
 
-        task_comp = evaluate_task_completion(result_struct, task)
-        fix_qual = evaluate_fix_quality(result_struct, task)
+        agent_diff = row.get("agent_diff", "")
+        judge_metrics = run_llm_judge_evals(result_struct, task, agent_diff=agent_diff)
+        row.update(judge_metrics)
 
-        row["task_completion_verdict"] = task_comp.get("verdict")
-        row["task_completion_score"] = task_comp.get("score")
-        row["task_completion_rationale"] = task_comp.get("rationale")
-        row["fix_quality_verdict"] = fix_qual.get("verdict")
-        row["fix_quality_score"] = fix_qual.get("score")
-        row["fix_quality_is_workaround"] = fix_qual.get("is_workaround")
-        row["fix_quality_rationale"] = fix_qual.get("rationale")
-
-        print(f"Verdict: {task_comp.get('verdict')} / {fix_qual.get('verdict')}")
+        print(f"Verdict: {row.get('task_completion_verdict')} / {row.get('fix_quality_verdict')}")
         updated_results.append(row)
 
     results_file.write_text(json.dumps(updated_results, indent=2), encoding="utf-8")

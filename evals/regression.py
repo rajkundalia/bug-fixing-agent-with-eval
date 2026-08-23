@@ -14,8 +14,12 @@ Usage pattern:
 Note: This module is a comparison utility library, not auto-invoked by the
 harness. Callers must load two results JSON files and pass them in manually.
 For automated cross-config comparison, see reports/compare_configs.py which
-uses this module's logic internally. To use in CI, load the golden baseline
-file from a known-good run and compare against the latest run output.
+uses this module's logic internally.
+
+CI Integration Note:
+This script exits with code 1 when regressions are detected, making it drop-in
+compatible with CI runners (e.g. GitHub Actions, GitLab CI). A pre-packaged
+workflow is deliberately omitted as this repository is built for local evaluation.
 """
 import json
 from pathlib import Path
